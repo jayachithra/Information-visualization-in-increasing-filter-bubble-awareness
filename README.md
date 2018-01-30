@@ -7,5 +7,5 @@ Data structure (Movielens): Movie lens data set contains four individual csv fil
   3. tags.csv with fields 'userId','movieId','tags','timestamp'. Example row: 15,339,sandra 'boring' bullock,1138537770
   4. links.csv with fields 'movieId','imdbId','tmdbId'. Example row: 1,0114709,862
   For my analysis only movies.csv and ratings.csv are relevant. 
-##Implementation steps: 
-###Data preprocessing
+## Implementation steps: 
+### Data preprocessing
