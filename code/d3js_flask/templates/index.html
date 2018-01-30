@@ -1,0 +1,208 @@
+<html>
+  <head>
+<style>
+    .chart rect {
+        fill: steelblue;
+    }
+
+        .chart rect:hover {
+            fill: turquoise;
+        }
+
+    .chart .rectM {
+        stroke: green;
+        stroke-width: 1;
+        fill: green;
+        fill-opacity: .2;
+    }
+
+        .chart .rectM:hover {
+            fill: green;
+            fill-opacity: .5;
+        }
+
+    .chart text {
+        font: 10px sans-serif;
+    }
+
+    .chart .title {
+        font: 15px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+    .tooltip {
+  position: absolute;
+  width: 200px;
+  height: 28px;
+  pointer-events: none;
+}
+    </style>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.11/d3.min.js"></script>
+</head>
+<body>
+<div class="chart"></div>
+<script>
+var graphData = {{ data.chart_data | safe }}
+var height = 300;
+var width = 700;
+var margin = 70;
+var diameter = 500;
+
+
+var labelX = 'Rating';
+var labelY = ' ';
+var svg = d3.select('.chart')
+                    .append('svg')
+                    .attr('class', 'chart')
+                    .attr("width", width + margin + margin)
+                    .attr("height", height + margin + margin)
+                    .append("g")
+                    .attr("transform", "translate(" + margin + "," + margin + ")");
+                    
+var x = d3.scale.linear()
+					            .domain([d3.min(graphData, function (d) { return d.ratings; }), d3.max(graphData, function (d) { return d.ratings; })])
+					            .range([0, width]);
+
+//var y = d3.scale.linear()
+					          //  .domain([d3.min(graphData, function (d) { return d.norm_frequency; }), d3.max(graphData, function (d) { return d.norm_frequency; })])
+					          //  .range([height, 0]);
+                         
+var y = d3.scale.ordinal()
+    .domain(["","user", "global"])
+    .rangePoints([height, 0]);
+
+var scale = d3.scale.sqrt()
+					            .domain([d3.min(graphData, function (d) { return d.norm_frequency; }), d3.max(graphData, function (d) { return d.norm_frequency; })])
+					            .range([5, 30]);
+var opacity = d3.scale.sqrt()
+					            .domain([d3.min(graphData, function (d) { return d.norm_frequency; }), d3.max(graphData, function (d) { return d.norm_frequency; })])
+					            .range([1, .5]);
+var color = d3.scale.category10();
+var tooltip = d3.select("body").append("div")
+.attr("class", "tooltip")
+      .style("opacity", 0);
+
+var xAxis = d3.svg.axis().scale(x);
+ var yAxis = d3.svg.axis().scale(y).orient("left");
+ 
+  svg.append("g")
+					        .attr("class", "y axis")
+					        .call(yAxis)
+					        .append("text")
+						        .attr("transform", "rotate(-90)")
+						        .attr("x", 2)
+						        .attr("y", -50)
+						        .attr("dy", ".71em")
+						        .style("text-anchor", "end")
+						        .text(labelY);
+                          // x axis and label
+                          svg.append("g")
+                              .attr("class", "x axis")
+                              .attr("transform", "translate(0," + height + ")")
+                              .call(xAxis)
+                              .append("text")
+                                  .attr("x", width +20)
+                                  .attr("y", margin - 50)
+                                  .attr("dy", ".71em")
+                                  .style("text-anchor", "end")
+                                  .text(labelX);
+                                     
+ 
+svg.selectAll("circle")
+                              .data(graphData)
+                              .enter()
+                              .insert("circle")
+                              .attr("r",function (d) { return scale(d.norm_frequency);})
+                                                         
+                             .attr("opacity", function (d) { return opacity(d.norm_frequency); })
+                             .style("fill", function (d) { return color(d.genres); }) 
+                             .attr("cx", function (d) { return x(d.ratings); })
+                             .attr("cy", function (d) { if (d.user == "global") 
+                                                               {return height/7;}  
+                                                         else 
+                                                         { return  height/2;}
+                                                        }) 
+                             //.attr("cy", function (d) { return y(d.user); })
+                            
+                            .on("mouseover", function(d) {
+                               fade(d.genres, .1);
+                            tooltip.transition()
+                             .duration(200)
+                            .style("opacity", .9);
+                             tooltip.html(d.genres+ "<br/> (freq:" +d.norm_frequency.toFixed(2) 
+	                          + ", rating:"+d.ratings+")")
+                            .style("left", (d3.event.pageX + 5) + "px")
+                            .style("top", (d3.event.pageY - 15) + "px");
+                            })
+                              .on("mousemove", function()
+                              {return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");})
+                            .on("mouseout", function(d) {
+                              fadeOut();       
+                             tooltip.transition()
+                           .duration(500)
+                             .style("opacity", 0);
+                               })
+                           .transition()
+                           .ease("bounce");
+                           
+/*svg.selectAll("g").data(graphData)
+    .append("text")
+                                  .attr("dx", function(d){return x(d.ratings);})
+                                  .attr("dy", function (d) { if (d.user == "global") 
+                                                               {return 10;}  
+                                                         else if (d.user=="user")
+                                                         { return 100;}
+                                                        }) 
+                                  .text(function (d) { return [d.genres,d.norm_frequency.toFixed(2)];});                                
+  draw legend
+  var legend = svg.selectAll(".legend")
+      .data(color.domain())
+      .enter().append("g")
+      .attr("class", "legend")
+      .attr("transform", function(d, i) { return "translate(0," + i * 15 + ")"; });
+
+  // draw legend colored rectangles
+  legend.append("rect")
+      .attr("x", width - 70)
+      .attr("width", 10)
+      .attr("height", 10)
+      .style("fill", color);
+
+  // draw legend text
+  legend.append("text")
+      .attr("x", function (d) { return x(d.ratings); })
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text("hello")
+*/
+function fade(c, opacity) {
+                              svg.selectAll("circle")
+                                  .filter(function (d) {
+                                      return d.genres != c;
+                                  })
+                                .transition()
+                                 .style("opacity", opacity);
+                             
+                           
+                          }
+
+                          function fadeOut() {
+                              svg.selectAll("circle")
+                              .transition()
+                                 .style("opacity", function (d) { opacity(d.norm_frequency); });
+                         
+                            }
+                             
+</script>
+<p>*different colors are used to represent different genres, size of the bubble correlates to frequency of each genre</p>
+<p>*frequency values are normalized to be in the range [0,1]
+<p>*hover over the bubble to know more!
+</body>
+</html>
