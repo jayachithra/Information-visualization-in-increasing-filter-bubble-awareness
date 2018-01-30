@@ -8,4 +8,4 @@ Data structure (Movielens): Movie lens data set contains four individual csv fil
   4. links.csv with fields 'movieId','imdbId','tmdbId'. Example row: 1,0114709,862
   For my analysis only movies.csv and ratings.csv are relevant. 
 ## Implementation steps: 
-### Data preprocessing
+   - (Data preprocessing): For each row in ratings.csv, the genre of the movie is obtained from movies.csv and it is added to ratings.csv (for ease of computation) 
